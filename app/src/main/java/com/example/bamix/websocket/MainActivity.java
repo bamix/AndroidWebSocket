@@ -1,5 +1,7 @@
 package com.example.bamix.websocket;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -15,12 +17,14 @@ import de.tavendo.autobahn.WebSocketHandler;
 public class MainActivity extends AppCompatActivity {
     private String url = "ws://alexignatyy-001-site1.ftempurl.com/Controllers/Handler1.ashx";
     private TextView ipInfo;
+    private EditText serverUrl;
     private EditText messageView;
     private Button connectButton;
     private Button sendButton;
     private boolean isConnected = false;
     private WebSocketConnection mConnection;
     private Server server;
+    private final String UrlKey = "ServerUrl";
     ArrayAdapter<String> adapter;
 
     @Override
@@ -28,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         messageView = (EditText) findViewById(R.id.message);
+        serverUrl = (EditText) findViewById(R.id.server);
         ipInfo = (TextView) findViewById(R.id.ip);
         ListView listView = (ListView) findViewById(R.id.listView);
         connectButton = (Button) findViewById(R.id.connect);
@@ -37,6 +42,24 @@ public class MainActivity extends AppCompatActivity {
         ipInfo.setText(server.getIpAddress()+" : "+ server.getPort());
         adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);
         if(listView!=null) listView.setAdapter(adapter);
+        LoadUrlFromPreferences();
+    }
+
+    private String LoadServerAddress(){
+        String address = serverUrl.getText().toString();
+        if(!address.equals(url)){
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(UrlKey, address);
+            editor.apply();
+        }
+        return  address;
+    }
+
+    private void LoadUrlFromPreferences(){
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        url = sharedPref.getString(UrlKey,url);
+        serverUrl.setText(url);
     }
 
     @Override
@@ -49,11 +72,10 @@ public class MainActivity extends AppCompatActivity {
         if(isConnected) Disconnect(); else Connect();
    }
 
-    private void Connect()
-    {
+    private void Connect(){
         try {
             mConnection = new WebSocketConnection();
-            mConnection.connect(url, new WebSocketHandler() {
+            mConnection.connect(LoadServerAddress(), new WebSocketHandler() {
                 @Override
                 public void onOpen() {
                     adapter.add("Connect");
@@ -85,13 +107,8 @@ public class MainActivity extends AppCompatActivity {
         mConnection.disconnect();
     }
 
-    public void testSend(View v)
-    {
-        server.send("test send");
-    }
 
-    public void SendToServer(String message)
-    {
+    public void SendToServer(String message){
         try {
             if(message.isEmpty() || mConnection==null || !mConnection.isConnected())return;
             mConnection.sendTextMessage(message);
