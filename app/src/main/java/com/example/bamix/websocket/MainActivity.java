@@ -7,17 +7,20 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketHandler;
 
 public class MainActivity extends AppCompatActivity {
     private String url = "ws://alexignatyy-001-site1.ftempurl.com/Controllers/Handler1.ashx";
+    private TextView ipInfo;
     private EditText messageView;
     private Button connectButton;
     private Button sendButton;
     private boolean isConnected = false;
     private WebSocketConnection mConnection;
+    private Server server;
     ArrayAdapter<String> adapter;
 
     @Override
@@ -25,12 +28,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         messageView = (EditText) findViewById(R.id.message);
+        ipInfo = (TextView) findViewById(R.id.ip);
         ListView listView = (ListView) findViewById(R.id.listView);
         connectButton = (Button) findViewById(R.id.connect);
         sendButton = (Button) findViewById(R.id.send);
 
+        server = new Server(this);
+        ipInfo.setText(server.getIpAddress()+" : "+ server.getPort());
         adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);
         if(listView!=null) listView.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        server.onDestroy();
     }
 
     public void onConnect(View v) {
@@ -70,6 +82,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void Disconnect() {
         mConnection.disconnect();
+    }
+
+    public void testSend(View v)
+    {
+        server.Send("test send");
     }
 
     public void onSend(View v){
