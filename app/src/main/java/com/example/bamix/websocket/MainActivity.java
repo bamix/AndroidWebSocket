@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onTextMessage(String message) {
+                    server.send(message);
                     adapter.add(message);
                 }
 
@@ -86,7 +87,19 @@ public class MainActivity extends AppCompatActivity {
 
     public void testSend(View v)
     {
-        server.Send("test send");
+        server.send("test send");
+    }
+
+    public void SendToServer(String message)
+    {
+        try {
+            if(message.isEmpty() || mConnection==null || !mConnection.isConnected())return;
+            mConnection.sendTextMessage(message);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public void onSend(View v){
@@ -95,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
             if(message.isEmpty())return;
             mConnection.sendTextMessage(message);
             messageView.setText("");
-            adapter.add("ME: "+message);
         }
         catch (Exception e)
         {

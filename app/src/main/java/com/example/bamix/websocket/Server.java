@@ -49,7 +49,7 @@ public class Server {
         }
     }
 
-    public void Send(String message)
+    public void send(String message)
     {
         for (Socket socket : sockets ) {
             SocketServerReplyThread replyThread = new SocketServerReplyThread(socket,message);
@@ -103,7 +103,7 @@ public class Server {
                         Log.d("myTag","disconnect ");
                         break;
                     }
-                    Log.d("myTag","read: "+ new String(buffer));
+                    activity.SendToServer(new String(buffer));
                 }
                 catch (Exception e)
                 {
