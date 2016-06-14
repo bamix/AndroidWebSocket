@@ -22,7 +22,7 @@ import de.tavendo.autobahn.WebSocketHandler;
 import de.tavendo.autobahn.WebSocketOptions;
 
 public class MainActivity extends AppCompatActivity {
-    private String url = "ws://alexignatyy-001-site1.ftempurl.com/Controllers/Handler1.ashx";
+    private String url = "ws://bamixsocket.azurewebsites.net/Controllers/Handler1.ashx";
     private TextView ipInfo;
     private EditText serverUrl;
     private EditText messageView;
