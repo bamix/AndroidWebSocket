@@ -11,8 +11,15 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketHandler;
+import de.tavendo.autobahn.WebSocketOptions;
 
 public class MainActivity extends AppCompatActivity {
     private String url = "ws://alexignatyy-001-site1.ftempurl.com/Controllers/Handler1.ashx";
@@ -25,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private WebSocketConnection mConnection;
     private Server server;
     private final String UrlKey = "ServerUrl";
+    private Timer mTimer;
+    private MyTimerTask mMyTimerTask;
     ArrayAdapter<String> adapter;
 
     @Override
@@ -43,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);
         if(listView!=null) listView.setAdapter(adapter);
         LoadUrlFromPreferences();
+        Connect();
     }
 
     private String LoadServerAddress(){
@@ -56,6 +66,16 @@ public class MainActivity extends AppCompatActivity {
         return  address;
     }
 
+    private void SaveServerAddress(){
+        String address = serverUrl.getText().toString();
+        if(!address.equals(url)){
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(UrlKey, address);
+            editor.apply();
+        }
+    }
+
     private void LoadUrlFromPreferences(){
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         url = sharedPref.getString(UrlKey,url);
@@ -65,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SaveServerAddress();
         server.onDestroy();
     }
 
@@ -73,8 +94,17 @@ public class MainActivity extends AppCompatActivity {
    }
 
     private void Connect(){
+        if(mTimer!=null){
+            mTimer.cancel();
+        }
+        mTimer = new Timer();
+        mMyTimerTask = new MyTimerTask();
+        mTimer.schedule(mMyTimerTask, 5000,5000);
         try {
             mConnection = new WebSocketConnection();
+            WebSocketOptions options = new WebSocketOptions();
+            options.setSocketConnectTimeout(1000000000);
+            options.setSocketReceiveTimeout(1000000000);
             mConnection.connect(LoadServerAddress(), new WebSocketHandler() {
                 @Override
                 public void onOpen() {
@@ -94,10 +124,11 @@ public class MainActivity extends AppCompatActivity {
                 public void onClose(int code, String reason) {
                     adapter.add("Disconnect");
                     connectButton.setText("Connect");
-                    sendButton.setEnabled(false);
+                    //sendButton.setEnabled(false);
                     isConnected=false;
+                    Connect();
                 }
-            });
+            },options);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,7 +141,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void SendToServer(String message){
         try {
-            if(message.isEmpty() || mConnection==null || !mConnection.isConnected())return;
+            if( mConnection==null || !mConnection.isConnected()) Connect();
+            if(message.isEmpty() )return;
             mConnection.sendTextMessage(message);
         }
         catch (Exception e)
@@ -132,4 +164,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    class MyTimerTask extends TimerTask {
+
+        @Override
+        public void run() {
+            SendToServer("keep active");
+        }
+    }
 }
