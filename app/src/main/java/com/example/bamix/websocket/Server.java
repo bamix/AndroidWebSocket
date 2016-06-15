@@ -69,7 +69,7 @@ public class Server {
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            activity.adapter.add("Connected: "+socket.getInetAddress().toString());
+                            activity.adapter.insert("Connected: "+socket.getInetAddress().toString(),0);
                         }
                     });
                     SocketServerReadThread readThread = new SocketServerReadThread(socket);
@@ -98,9 +98,14 @@ public class Server {
                     int c =inputStreamReader.read(buffer);
                     if(c==-1)
                     {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                activity.adapter.insert("Disconnected: "+socket.getInetAddress().toString(),0);
+                            }
+                        });
                         socket.close();
                         sockets.remove(socket);
-                        Log.d("myTag","disconnect ");
                         break;
                     }
                     activity.SendToServer(new String(buffer));

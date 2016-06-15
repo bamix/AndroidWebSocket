@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private final String UrlKey = "ServerUrl";
     private Timer mTimer;
     private MyTimerTask mMyTimerTask;
+    private final String keepActive = "keep active";
     ArrayAdapter<String> adapter;
 
     @Override
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
             mConnection.connect(LoadServerAddress(), new WebSocketHandler() {
                 @Override
                 public void onOpen() {
-                    adapter.add("Connect");
+                    adapter.insert("Connect",0);
                     connectButton.setText("Disconnect");
                     sendButton.setEnabled(true);
                     isConnected=true;
@@ -117,14 +118,13 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onTextMessage(String message) {
                     server.send(message);
-                    adapter.add(message);
+                    adapter.insert("Host: " + message.substring(0,message.length()<10?message.length():10),0);
                 }
 
                 @Override
                 public void onClose(int code, String reason) {
-                    adapter.add("Disconnect");
+                    adapter.insert("Disconnect",0);
                     connectButton.setText("Connect");
-                    //sendButton.setEnabled(false);
                     isConnected=false;
                     Connect();
                 }
@@ -139,11 +139,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void SendToServer(String message){
+    public void SendToServer(final String message){
         try {
             if( mConnection==null || !mConnection.isConnected()) Connect();
             if(message.isEmpty() )return;
             mConnection.sendTextMessage(message);
+            if(!message.equals(keepActive)){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.insert("Client: " + message.substring(0,message.length()<10?message.length():10),0);
+                    }
+                });
+           }
         }
         catch (Exception e)
         {
@@ -152,23 +160,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onSend(View v){
-        try {
-            String message = messageView.getText().toString();
-            if(message.isEmpty())return;
-            mConnection.sendTextMessage(message);
-            messageView.setText("");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        SendToServer(messageView.getText().toString());
+        messageView.setText("");
+
     }
 
     class MyTimerTask extends TimerTask {
 
         @Override
         public void run() {
-            SendToServer("keep active");
+            SendToServer(keepActive);
         }
     }
 }
